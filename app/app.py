@@ -1,16 +1,14 @@
-from fastapi import FastAPI,HTTPException
-app=FastAPI()
+from fastapi import FastAPI,HTTPException,File,UploadFile,Depends,Form
+from app.schemas import PostCreate,PostResponse
+from app.db import Post,create_db_and_tables,get_async_session
+from sqlalchemy.ext.asyncio import AsyncSession
+from contextlib import asynccontextmanager
 
-text_posts={1:{"title":"First Post","content":"This is the content of the first post."},
-            2:{"title":"Second Post","content":"This is the content of the second post."}}
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await create_db_and_tables()
+    yield
 
-@app.get("/posts")
-def get_all_posts(limit:int=None):
-    if limit and limit<=len(text_posts):
-        return {key:text_posts[key] for key in list(text_posts)[:limit]}
-    return text_posts
-@app.get("/posts/{post_id}")
-def get_post(post_id:int):
-    if post_id not in text_posts:
-        raise HTTPException(status_code=404,detail="Post not found")
-    return text_posts.get(post_id)
+
+app=FastAPI(lifespan=lifespan)
+
